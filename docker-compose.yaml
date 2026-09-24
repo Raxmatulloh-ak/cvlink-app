@@ -3,7 +3,7 @@ services:
   # docker compose up generate
   generate:
     container_name: ${DOCKER_PROJECT_NAME}_generate
-    image: node:20-alpine3.21
+    image: node:24-alpine
     volumes:
       - ./:/var/www/html
       - /var/www/html/node_modules # ignoring node_modules folder
@@ -14,7 +14,7 @@ services:
   # docker compose up dev
   dev:
     container_name: ${DOCKER_PROJECT_NAME}_dev
-    image: node:22-alpine
+    image: node:24-alpine
     volumes:
       - ./:/var/www/html
       - /var/www/html/node_modules # ignoring node_modules folder

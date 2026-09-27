@@ -1,8 +1,22 @@
-import {getItemId, iri} from '@/utils/api'
+import {getItemId} from '@/utils/api'
 import {ATTRIBUTE_VALUE_TYPE} from '@/constants/domain'
 
 export function scalarFromAttributeValue(definition, value) {
-    if (!value) return definition.valueType === ATTRIBUTE_VALUE_TYPE.period ? {start: '', end: ''} : null
+    if (value?.valueId !== undefined) {
+        if (definition.valueType === ATTRIBUTE_VALUE_TYPE.period) {
+            return value.value || {start: '', end: ''}
+        }
+        
+        if (definition.valueType === ATTRIBUTE_VALUE_TYPE.dropdown) {
+            return value.value?.id ?? null
+        }
+
+        return value.value
+    }
+
+    if (!value) {
+        return definition.valueType === ATTRIBUTE_VALUE_TYPE.period ? {start: '', end: ''} : null
+    }
 
     switch (definition.valueType) {
         case ATTRIBUTE_VALUE_TYPE.numeric:
@@ -25,10 +39,9 @@ export function scalarFromAttributeValue(definition, value) {
     }
 }
 
-export function attributeValuePayload({definition, scalar, ownerId, current = null}) {
+export function attributeValuePayload({definition, scalar, current = null}) {
     const payload = {
-        owner: iri('users', ownerId),
-        attribute: iri('attribute_definitions', definition.id),
+        attributeId: definition.id,
         textValue: null,
         imageReference: null,
         numericValue: null,
@@ -36,7 +49,7 @@ export function attributeValuePayload({definition, scalar, ownerId, current = nu
         periodStart: null,
         periodEnd: null,
         booleanValue: null,
-        option: null,
+        optionId: null,
         ...(current?.version ? {version: current.version} : {}),
     }
 
@@ -55,7 +68,7 @@ export function attributeValuePayload({definition, scalar, ownerId, current = nu
             payload.booleanValue = scalar === null || scalar === undefined ? null : Boolean(scalar)
             break
         case ATTRIBUTE_VALUE_TYPE.dropdown:
-            payload.option = scalar ? iri('attribute_options', scalar) : null
+            payload.optionId = scalar ? Number(scalar) : null
             break
         case ATTRIBUTE_VALUE_TYPE.image:
             payload.imageReference = scalar || null
@@ -68,7 +81,13 @@ export function attributeValuePayload({definition, scalar, ownerId, current = nu
 }
 
 export function isAttributeScalarEmpty(definition, scalar) {
-    if (definition.valueType === ATTRIBUTE_VALUE_TYPE.boolean) return scalar === null || scalar === undefined
-    if (definition.valueType === ATTRIBUTE_VALUE_TYPE.period) return !scalar?.start || !scalar?.end
+    if (definition.valueType === ATTRIBUTE_VALUE_TYPE.boolean) {
+        return scalar === null || scalar === undefined
+    }
+
+    if (definition.valueType === ATTRIBUTE_VALUE_TYPE.period) {
+        return !scalar?.start || !scalar?.end
+    }
+
     return scalar === null || scalar === undefined || scalar === ''
 }

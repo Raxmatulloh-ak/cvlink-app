@@ -1,58 +1,97 @@
 import {defineStore} from 'pinia'
 import {reactive} from 'vue'
-import {getCollection, getTotalItems, iri} from '@/utils/api'
-import {CV_STATUS} from '@/constants/domain'
+import {getCollection} from '@/utils/api'
 
 export const useCvStore = defineStore('cvs', () => {
-    const config = useRuntimeConfig()
-    const state = reactive({cvs: [], cv: null, totalItems: 0, loading: false})
-    const api = () => useNuxtApp().$axios
-    const resource = () => String(config.public.cvResource)
+    const state = reactive({
+        cvs: [],
+        cv: null,
+        loading: false,
+        page: 1,
+        hasMore: false,
+        filters: {},
+    })
+
+    const api = useNuxtApp().$axios
 
     async function fetchCvs(params = {}) {
         state.loading = true
         try {
-            const response = await api().get(resource(), {params})
-            state.cvs = getCollection(response)
-            state.totalItems = getTotalItems(response, state.cvs)
+            const response = await api.get('/cvs', {params})
+            const items = getCollection(response)
+            const page = Number(params.page || 1)
+
+            state.cvs = page > 1 ? [...state.cvs, ...items] : items
+            state.page = Number(response.data.page || page)
+            state.hasMore = response.data.hasMore === true
+            state.filters = {...params, page: undefined}
+
             return state.cvs
         } finally {
             state.loading = false
         }
     }
 
+    async function loadMoreCvs() {
+        if (!state.hasMore || state.loading) {
+            return state.cvs
+        }
+
+        return fetchCvs({...state.filters, page: state.page + 1})
+    }
+
     async function fetchCv(id) {
-        const response = await api().get(`${resource()}/${id}`)
+        const response = await api.get(`/cvs/${id}`)
         state.cv = response.data
+
         return state.cv
     }
 
     async function pushCv(positionId) {
-        const response = await api().post(resource(), {
-            position: iri('positions', positionId),
-            status: CV_STATUS.draft,
-        })
+        const response = await api.post('/cvs', {positionId: Number(positionId)})
         state.cvs.unshift(response.data)
         state.cv = response.data
-        return response.data
-    }
 
-    async function patchCv(id, data) {
-        const response = await api().patch(`${resource()}/${id}`, data)
-        const index = state.cvs.findIndex((item) => item.id === Number(id))
-        if (index !== -1) state.cvs[index] = response.data
-        state.cv = response.data
         return response.data
     }
 
     async function publishCv(id, version) {
-        return patchCv(id, {status: CV_STATUS.published, version})
+        const response = await api.post(`/cvs/${id}/publish`, {version})
+        state.cv = response.data
+
+        return response.data
     }
 
     async function deleteCv(id, version) {
-        await api().delete(`${resource()}/${id}`, {params: version ? {version} : {}})
+        await api.delete(`/cvs/${id}`, {params: {version}})
         state.cvs = state.cvs.filter((item) => item.id !== Number(id))
+
+        if (state.cv?.id === Number(id)) {
+            state.cv = null
+        }
     }
 
-    return {state, fetchCvs, fetchCv, pushCv, patchCv, publishCv, deleteCv}
+    async function likeCv(id) {
+        const response = await api.post(`/cvs/${id}/like`)
+
+        return response.data
+    }
+
+    async function unlikeCv(id) {
+        const response = await api.delete(`/cvs/${id}/like`)
+        
+        return response.data
+    }
+
+    return {
+        state,
+        fetchCvs,
+        loadMoreCvs,
+        fetchCv,
+        pushCv,
+        publishCv,
+        deleteCv,
+        likeCv,
+        unlikeCv,
+    }
 })

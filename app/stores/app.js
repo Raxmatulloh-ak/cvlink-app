@@ -14,19 +14,23 @@ export const useAppStore = defineStore('app', () => {
     function setTheme(theme) {
         state.theme = theme === 'dark' ? 'dark' : 'light'
         themeCookie.value = state.theme
+
+        return state.theme
     }
 
     function toggleTheme() {
-        setTheme(state.theme === 'dark' ? 'light' : 'dark')
+        return setTheme(state.theme === 'dark' ? 'light' : 'dark')
     }
 
     function setLocale(locale) {
         state.locale = locale === 'uz' ? 'uz' : 'en'
         localeCookie.value = state.locale
+
+        return state.locale
     }
 
     function switchLocale() {
-        setLocale(state.locale === 'en' ? 'uz' : 'en')
+        return setLocale(state.locale === 'en' ? 'uz' : 'en')
     }
 
     function dismissToast(id) {

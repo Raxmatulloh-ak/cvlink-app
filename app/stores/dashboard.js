@@ -10,6 +10,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         try {
             const response = await api.get('/dashboard')
             state.dashboard = response.data
+
             return state.dashboard
         } finally {
             state.loading = false

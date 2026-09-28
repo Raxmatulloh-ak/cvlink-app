@@ -64,7 +64,10 @@ export const useUserStore = defineStore('users', () => {
             return null
         }
 
-        const response = await api.post('/users/about_me')
+        const response = await api.post('/users/about_me', null, {
+            headers: {Authorization: `Bearer ${state.accessToken}`},
+        })
+
         state.user = response.data
         const appStore = useAppStore()
         appStore.setLocale(state.user.locale)

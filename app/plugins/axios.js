@@ -16,7 +16,7 @@ export default defineNuxtPlugin(() => {
         request.headers.Accept = 'application/ld+json'
         request.headers['Accept-Language'] = locale.value
 
-        if (token.value) {
+        if (token.value && !request.headers.Authorization) {
             request.headers.Authorization = `Bearer ${token.value}`
         }
 

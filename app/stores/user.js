@@ -17,7 +17,19 @@ export const useUserStore = defineStore('users', () => {
     const api = useNuxtApp().$axios
     const isAuthenticated = computed(() => Boolean(state.accessToken))
     const roles = computed(() => state.user?.roles || [])
-    const primaryRole = computed(() => roles.value[0] || ROLE_CANDIDATE)
+
+    const primaryRole = computed(() => {
+        if (roles.value.includes(ROLE_ADMIN)) {
+            return ROLE_ADMIN
+        }
+
+        if (roles.value.includes('ROLE_RECRUITER')) {
+            return 'ROLE_RECRUITER'
+        }
+
+        return ROLE_CANDIDATE
+    })
+
     const primaryRoleLabel = computed(() => primaryRole.value.replace('ROLE_', '').toLowerCase())
     const displayName = computed(() => state.user?.email?.split('@')[0] || 'Account')
     const initials = computed(() => displayName.value

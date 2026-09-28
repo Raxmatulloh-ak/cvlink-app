@@ -13,7 +13,12 @@ const query = ref(String(route.query.q || ''))
 const access = ref('all')
 const selected = ref([])
 
-await useAsyncData(`positions-${route.query.tag || ''}`, () => positionStore.fetchPositions({tag: route.query.tag || undefined}).catch(() => []))
+await useAsyncData(
+    `positions-${route.query.tag || ''}`,
+    () => positionStore.fetchPositions({tag: route.query.tag || undefined}).catch(() => []),
+    {server: false},
+)
+
 useSeoMeta({title: 'Positions'})
 
 watch(() => route.query.q, (value) => {

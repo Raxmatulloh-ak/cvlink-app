@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {usePositionStore} from '@/stores/position'
 import {useUserStore} from '@/stores/user'
 import {useAppStore} from '@/stores/app'
@@ -13,11 +13,10 @@ const query = ref(String(route.query.q || ''))
 const access = ref('all')
 const selected = ref([])
 
-await useAsyncData(
-    `positions-${route.query.tag || ''}`,
-    () => positionStore.fetchPositions({tag: route.query.tag || undefined}).catch(() => []),
-    {server: false},
-)
+onMounted(() => {
+    positionStore.fetchPositions({tag: route.query.tag || undefined})
+        .catch((error) => appStore.notify(apiMessage(error, 'Positions could not be loaded.'), 'error'))
+})
 
 useSeoMeta({title: 'Positions'})
 

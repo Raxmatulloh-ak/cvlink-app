@@ -1,12 +1,14 @@
 <script setup>
-import {computed} from 'vue'
+import {computed, onMounted} from 'vue'
 import {useDashboardStore} from '@/stores/dashboard'
 import {useTranslate} from '@/composables/useTranslate'
 
 const dashboardStore = useDashboardStore()
 const {t} = useTranslate()
 
-await useAsyncData('dashboard', () => dashboardStore.fetchDashboard())
+onMounted(() => {
+    dashboardStore.fetchDashboard().catch(console.error)
+})
 
 const dashboard = computed(() => dashboardStore.state.dashboard || {})
 const latest = computed(() => dashboard.value.latestPositions || [])

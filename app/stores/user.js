@@ -96,10 +96,11 @@ export const useUserStore = defineStore('users', () => {
 
     async function patchPreferences(data) {
         const response = await api.patch('/users/preferences', data)
-        state.user = response.data
-        const appStore = useAppStore()
-        appStore.setLocale(state.user.locale)
-        appStore.setTheme(state.user.theme)
+
+        state.user = {
+            ...state.user,
+            ...response.data,
+        }
 
         return state.user
     }
